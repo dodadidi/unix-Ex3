@@ -18,7 +18,7 @@
 
 int main(void)
 {
-	char buff[SIZE];
+	char buff[SIZE]={'\0'};
 	int listenS = socket(AF_INET, SOCK_STREAM, 0);	// server socket
 	if (listenS < 0)
 	{
@@ -61,18 +61,26 @@ int main(void)
 	while(recv(newfd, buff, SIZE,0) >= 0)
 	{
 		printf("recieved from client: %s\n",buff);
-		if(strcmp(buff, "CLOSE CLIENT")==0)
+		printf("%d",strcmp(buff, "CLOSE CLIENT"));
+		if(strcmp(buff, "CLOSE CLIENT") == 0)
 		{
 			break;
 		}
-		//TODO Command handling 
 		
+		//TODO Command handling 
+
 		else{
-			if (send(newfd, "invalid command", sizeof("invalid command"), 0) < 0)
+			/*if (send(newfd, "invalid command", sizeof("invalid command"), 0) < 0)
 			{
 				perror("send");
 				return 1;
 			}
+			else
+			{*/
+			
+			int res = system(buff);
+			printf("%d",res);
+			//}
 		}
 	}
 	printf("closing client %d\n", newfd);

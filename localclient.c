@@ -37,7 +37,7 @@ int main(void)
 	while(1){
 		printf("Please enter command: ");
 		fgets(input,SIZE,stdin);
-
+		strcat(input,"\0");
 		if (send(sock, input, SIZE, 0) < 0)
 		{
 			perror("send");
