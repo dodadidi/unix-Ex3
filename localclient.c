@@ -14,10 +14,16 @@
 #define IP_ADDR 0x7f000001
 #define SIZE 256
 
+typedef enum { T, F } boolean; 
+
 int main(void)
 {
-	int sock = socket(AF_INET, SOCK_STREAM, 0), nrecv;
-	char someBuffer[SIZE], input[SIZE];
+	int sock = socket(AF_INET, SOCK_STREAM, 0);
+	int nrecv;
+	char input[SIZE];
+	char someBuffer1[SIZE];
+	boolean on = T;
+	
 	struct sockaddr_in s = {0};
 	s.sin_family = AF_INET;
 	s.sin_port = htons(PORT);
@@ -28,33 +34,39 @@ int main(void)
 		return 1;
 	}
 	printf("Successfully connected.\n");
-	if ((nrecv = recv(sock, someBuffer, SIZE, 0)) < 0)
-	{
-		perror("recv");
-		return 1;
-	}
-	printf("Successfully received %d bytes. Message Received %s\n", nrecv, someBuffer);
-	while(1){
+
+	//while(on == T){
 		printf("Please enter command: ");
 		fgets(input,SIZE,stdin);
-		strcat(input,"\0");
-		if (send(sock, input, SIZE, 0) < 0)
+		strtok(input,"\n");
+		if (!strcasecmp(input,"exit"))
+		{
+			//TODO: function
+			if (send(sock, "CLOSE CLIENT", sizeof("CLOSE CLIENT"), 0) < 0)
+			{
+				perror("send");
+				return 1;
+			}
+			close(sock);
+			return 0;
+		}
+		
+		if (send(sock, input, sizeof(input), 0) < 0)
 		{
 			perror("send");
 			return 1;
 		}
-		if (strcmp(input,"CLOSE CLIENT")==0)
-		{
-			break;
-		}
 		
-		if ((nrecv = recv(sock, someBuffer, sizeof(someBuffer), 0)) < 0)
+		if ((nrecv = recv(sock, someBuffer1, sizeof(someBuffer1), 0)) < 0)
 		{
 			perror("recv");
 			return 1;
-		}
-		printf("Successfully received %d bytes. Message Received %s\n", nrecv, someBuffer);
-	}
+		}	
+		printf("Successfully received %d bytes. Message Received: %s\n", nrecv, someBuffer1);
+		fflush(stdout);
+	//}
+	
 	close(sock);
 	return 0;
 }
+
