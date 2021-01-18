@@ -13,7 +13,7 @@
 #define PORT 0x0da2
 #define IP_ADDR 0x7f000001
 #define QUEUE_LEN 20
-#define SIZE 256
+#define SIZE 1024
 
 int main(void)
 {
@@ -56,37 +56,34 @@ int main(void)
 	if (!strcasecmp(buff,"CLOSE CLIENT"))
 	{
 		printf("Close server'n");
+		if (send(newfd, "CLOSE SERVER", sizeof("CLOSE SERVER"), 0) < 0)
+		{
+			perror("send");
+			close(newfd);
+			close(listenS);
+			return 1;
+		}	
+		close(newfd);
 		close(listenS);
 		return 0;
 	}
 
-	/*printf("\nExecuting command \"%s\" for client...",buf);
-	strcat(buf," > output.txt");
-	system(buf);
 	
-	int fd,i;
-	char res_buff[SIZE];
-	fd=open("output.txt",O_RDONLY);
-	if(fd==-1)
+	FILE* result_file = popen(buff,"r");
+	char result_buff[SIZE];
+	
+	while(fgets(result_buff, SIZE, result_file)!=NULL)
 	{
-		printf("Error in Opening the file\n");exit(0);
-	}
-	while(1)
-	{
-		i=read(fd,res_buff,sizeof(res_buff));
-		write(newfd,buff,i);
-		if(i)
-		{
-			break;
-		}
-	}
-
-	close(fd);*/
-	if (send(newfd, buff, sizeof(buff), 0) < 0)
+		printf("%s\n",result_buff);
+		if (send(newfd, result_buff, sizeof(result_buff), 0) < 0)
 		{
 			perror("send");
+			close(newfd);
+			close(listenS);
 			return 1;
-		}
+		}			
+	}
+	send(newfd, "-1", sizeof("-1"), 0);
 	printf("Done sending data to client %d. Closing socket.\n", newfd);
 	close(newfd);
 	close(listenS);

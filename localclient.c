@@ -12,7 +12,7 @@
 
 #define PORT 0x0da2
 #define IP_ADDR 0x7f000001
-#define SIZE 256
+#define SIZE 1024
 
 typedef enum { T, F } boolean; 
 
@@ -57,13 +57,25 @@ int main(void)
 			return 1;
 		}
 		
-		if ((nrecv = recv(sock, someBuffer1, sizeof(someBuffer1), 0)) < 0)
+		nrecv = recv(sock, someBuffer1, sizeof(someBuffer1), 0);
+		while(strcmp(someBuffer1,"-1")>0)
 		{
-			perror("recv");
-			return 1;
+			if(!strcmp(someBuffer1,"CLOSE SERVER"))
+			{
+				printf("close socket");
+				close(sock);
+				return 0;
+			}
+			printf("%s", someBuffer1);
+			if ((nrecv = recv(sock, someBuffer1, sizeof(someBuffer1), 0)) < 0)
+			{
+				printf("nrecv: %d",nrecv);
+				perror("recv");
+				close(sock);
+				return 1;
+			}	
 		}	
 		printf("Successfully received %d bytes. Message Received: %s\n", nrecv, someBuffer1);
-		fflush(stdout);
 	//}
 	
 	close(sock);
