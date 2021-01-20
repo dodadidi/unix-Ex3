@@ -9,21 +9,35 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 #define PORT 0x0da2
 #define IP_ADDR 0x7f000001
 #define SIZE 1024
 
-typedef enum { T, F } boolean; 
+int sock;
 
+void exit_cmd()
+{
+	if (send(sock, "CLOSE CLIENT", sizeof("CLOSE CLIENT"), 0) < 0)
+	{
+		perror("send");
+	}
+	close(sock);
+	exit(0);	
+}
 int main(void)
 {
-	int sock = socket(AF_INET, SOCK_STREAM, 0);
 	int nrecv;
 	char input[SIZE];
 	char someBuffer1[SIZE];
-	boolean on = T;
-	
+
+	signal(SIGABRT, exit_cmd);
+    #ifdef SIGBREAK
+    	signal(SIGBREAK, exit_cmd);
+    #endif
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+
 	struct sockaddr_in s = {0};
 	s.sin_family = AF_INET;
 	s.sin_port = htons(PORT);
@@ -34,21 +48,15 @@ int main(void)
 		return 1;
 	}
 	printf("Successfully connected.\n");
-
-	//while(on == T){
+	while(1){
 		printf("Please enter command: ");
 		fgets(input,SIZE,stdin);
 		strtok(input,"\n");
 		if (!strcasecmp(input,"exit"))
 		{
-			//TODO: function
-			if (send(sock, "CLOSE CLIENT", sizeof("CLOSE CLIENT"), 0) < 0)
-			{
-				perror("send");
-				return 1;
-			}
-			close(sock);
+			exit_cmd();
 			return 0;
+			//exit(0);
 		}
 		
 		if (send(sock, input, sizeof(input), 0) < 0)
@@ -75,8 +83,9 @@ int main(void)
 				return 1;
 			}	
 		}	
-		printf("Successfully received %d bytes. Message Received: %s\n", nrecv, someBuffer1);
-	//}
+		//printf("Successfully received %d bytes. Message Received: %s\n", nrecv, someBuffer1);
+	//	fflush(stdout);		
+	}
 	
 	close(sock);
 	return 0;
